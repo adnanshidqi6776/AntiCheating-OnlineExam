@@ -1,0 +1,13 @@
+train: C:/testPyTorch/Skripsi/train/images
+val: C:/testPyTorch/Skripsi/valid/images
+test: C:/testPyTorch/Skripsi/test/images
+
+nc: 3
+names: ["book", "finger", "handphone"]
+
+roboflow:
+  workspace: coba1-1cppi
+  project: forbidden-10-sxuou
+  version: 2
+  license: CC BY 4.0
+  url: https://universe.roboflow.com/coba1-1cppi/forbidden-10-sxuou/dataset/2

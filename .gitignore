@@ -1,0 +1,43 @@
+# Python bytecode & cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Model files
+*.pt
+*.pth
+
+# Dataset & training output
+train/
+valid/
+test/
+detected_images/
+
+# Tetap upload folder runs
+!runs/
+runs/**
+
+# Configs & logs
+*.log
+*.yaml
+!data.yaml
+!render.yaml
+!requirements.txt
+
+# IDE & editor files
+.vscode/
+.idea/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+#without testing folder
+logs/
+output/
