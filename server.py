@@ -27,7 +27,7 @@ app.add_middleware(
 )
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
-model = YOLO('runs/detect/train/weights/best.pt')
+model = YOLO('./best.pt')
 model.to(device)
 
 # === Fungsi untuk mencatat log pelanggaran ===
