@@ -39,18 +39,17 @@ Aplikasi ini siap dijalankan di **Hugging Face Spaces (SDK: FastAPI)**.
 ## 🧩 Struktur Folder
 
 skripsi-yolo/
+├── static
+   └── home.html
+   └── testPage.html
 ├── server.py
+├── best.pt
 ├── requirements.txt
 ├── README.md
-└── runs/
-└── detect/
-└── train/
-└── weights/
-└── best.pt
 
 ---
 
-## ⚙️ Menjalankan di Lokal
+## Menjalankan di Lokal
 
 ### 1. Buat virtual environment (opsional tapi disarankan)
 
