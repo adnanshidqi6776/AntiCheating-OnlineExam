@@ -46,9 +46,8 @@ while True:
 
     h, w, _ = frame.shape
 
-    # =========================
     # YOLO INFERENCE (FRAME ASLI)
-    # =========================
+   
     results = model.predict(
         frame,
         conf=0.5,
@@ -56,14 +55,10 @@ while True:
         verbose=False
     )
 
-    # =========================
-    # MIRROR VIDEO
-    # =========================
-    display_frame = cv2.flip(frame, 1)
-
-    # =========================
-    # DRAW BBOX & LABEL (MANUAL)
-    # =========================
+    display_frame = cv2.flip(frame, 1) #mirror camera
+  
+    # Bounding Box & Labeling
+  
     boxes = results[0].boxes
     names = results[0].names
 

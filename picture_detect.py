@@ -46,7 +46,7 @@ print(f"\nMode deteksi aktif: {active_class.upper()}")
 root = Tk()
 root.withdraw()
 root.attributes("-topmost", True)
-root.update()   # ← INI PENTING di Windows!
+root.update() 
 
 image_paths = filedialog.askopenfilenames(
     title="Pilih gambar",

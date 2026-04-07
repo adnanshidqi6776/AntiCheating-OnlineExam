@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -277,7 +277,7 @@
       // Untuk Toggle di Home
       const params = new URLSearchParams(window.location.search);
       const limitFromURL = params.get("limit");
-      const detectEnabled = params.get("detect") === "on"; // ✅ baca status toggle
+      const detectEnabled = params.get("detect") === "on"; // baca status toggle
 
       // === Variabel untuk progress bar ===
       const progressBar = document.getElementById("progressBar");
@@ -296,13 +296,13 @@
         stream = await navigator.mediaDevices.getUserMedia({ video: true });
         video.srcObject = stream;
 
-        // ✅ Set ukuran canvas sesuai resolusi kamera
+        // Set ukuran canvas sesuai resolusi kamera
         video.onloadedmetadata = () => {
           canvas.width = video.videoWidth;
           canvas.height = video.videoHeight;
         };
 
-        // 🚀 Jalankan YOLO WebSocket tetap aktif (meskipun toggle OFF)
+        // Jalankan YOLO WebSocket tetap aktif (meskipun toggle OFF)
         ws = new WebSocket("ws://localhost:8000/ws");
 
         ws.onopen = () => {
@@ -310,7 +310,7 @@
             JSON.stringify({
               max_warnings: limit,
               detect_enabled: detectEnabled, // kirim status toggle ke server
-            })
+            }),
           );
           sendInterval = setInterval(sendFrame, 66); // 5fps=200, 10fps=100, 15fps=66, 20fps=50, 25fps=40, 30fps=33
         };
@@ -341,7 +341,7 @@
             ctx.fillText(
               `${b.class} (${b.confidence.toFixed(2)})`,
               mirroredX1,
-              y1 - 5
+              y1 - 5,
             );
           });
 
@@ -354,11 +354,11 @@
               ws.send(JSON.stringify({ cmd: "ack_warning" }));
             }
 
-            // === 🟢 Update progress bar ===
+            // === Update progress bar ===
             currentWarnings++;
             const progress = Math.min(
               (currentWarnings / maxWarnings) * 100,
-              100
+              100,
             );
             progressBar.style.width = progress + "%";
             progressBar.setAttribute("aria-valuenow", progress);
@@ -372,13 +372,13 @@
             else progressBar.className = "progress-bar bg-danger";
           }
 
-          // 🚫 Jika toggle OFF, abaikan show_warning dan stop
+          // Jika toggle OFF, abaikan show_warning dan stop
           if (data.show_warning && !detectEnabled) {
-            console.log("⚠️ Deteksi diabaikan (toggle OFF)");
+            console.log("Deteksi diabaikan (toggle OFF)");
           }
 
           if (data.stop && detectEnabled) {
-            alert(data.message || "⚠️ Kamera dihentikan!");
+            alert(data.message || "Kamera dihentikan!");
             turnOffCamera();
           }
         };

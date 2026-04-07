@@ -9,17 +9,17 @@ from tkinter import Tk, filedialog
 MODEL_PATH = r"runs\detect\train\weights\best.pt"
 OUTPUT_DIR = "output"
 
+#sesuai data.yaml
 CLASS_MAP = {
     "book": 0,
     "finger": 1,
     "handphone": 2
 }
 
-CONF_THRESHOLD = 0.5
+CONF_THRESHOLD = 0.57 #sesuai hasil training
 
-# ==============================
 # PILIH MODE DETEKSI
-# ==============================
+
 print("Pilih kelas yang ingin dideteksi:")
 print("1. book")
 print("2. finger")
@@ -40,12 +40,12 @@ else:
 ACTIVE_CLASS_ID = CLASS_MAP[active_class]
 print(f"\nMode deteksi aktif: {active_class.upper()}")
 
-# ==============================
+
 # PILIH GAMBAR (MULTI SELECT)
-# ==============================
+
 root = Tk()
 root.withdraw()
-root.attributes("-topmost", True)  # 🔑 PENTING agar dialog muncul di depan
+root.attributes("-topmost", True)  # PENTING agar dialog muncul di depan
 root.update()
 
 image_paths = filedialog.askopenfilenames(
@@ -59,19 +59,17 @@ if not image_paths:
     print("Tidak ada gambar dipilih.")
     exit()
 
-# ==============================
 # LOAD MODEL
-# ==============================
+
 model = YOLO(MODEL_PATH)
 
-# ==============================
+
 # BUAT FOLDER OUTPUT
-# ==============================
+
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-# ==============================
 # PROSES DETEKSI
-# ==============================
+
 for img_path in image_paths:
     print(f"Memproses: {os.path.basename(img_path)}")
 
@@ -104,9 +102,8 @@ for img_path in image_paths:
             2
         )
 
-    # ==============================
     # SIMPAN HASIL
-    # ==============================
+ 
     filename = os.path.basename(img_path)
     name, ext = os.path.splitext(filename)
     output_path = os.path.join(OUTPUT_DIR, f"{name}_output{ext}")

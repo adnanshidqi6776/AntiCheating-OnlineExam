@@ -32,7 +32,7 @@ model.to(device)
 
 # === Fungsi untuk mencatat log pelanggaran ===
 def log_violation(violation_type, confidence, filename):
-    os.makedirs("logs", exist_ok=True)  # Pastikan folder logs ada
+    os.makedirs("logs", exist_ok=True)  # Check folder logs
     log_file = os.path.join("logs", "violations_log.csv")  # Simpan di folder logs
     file_exists = os.path.isfile(log_file)
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -55,7 +55,7 @@ last_save_time = 0
 SAVE_COOLDOWN = 5   # detik
 
 last_warning_time = 0
-WARNING_COOLDOWN = 5  # detik
+WARNING_COOLDOWN = 5  # detik (memastikan notifikasi warning tidak bertumpuk)
 
 
 @app.get("/")
@@ -94,7 +94,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 img_data = base64.b64decode(payload["image"].split(",")[1])
                 npimg = np.frombuffer(img_data, np.uint8)
                 frame = cv2.imdecode(npimg, cv2.IMREAD_COLOR)
-                # frame = cv2.flip(frame, 1)  mirror secara horizontal
+                # frame = cv2.flip(frame, 1)  mirror camera
 
 
                 # Jalankan YOLO di thread terpisah agar tidak blocking event loop
@@ -205,7 +205,7 @@ async def websocket_endpoint(websocket: WebSocket):
     finally:
         print("WS Closed")
 
-# === Tambahkan ini agar jalan di lokal maupun Render ===
+# === server lokal ===
 if __name__ == "__main__":
     import uvicorn
     port = int(os.environ.get("PORT", 8000))
