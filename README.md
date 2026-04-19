@@ -1,6 +1,5 @@
 ---
-title: YOLO FastAPI Detection
-emoji: 🧠
+title: Sistem Anti Cheating Online Exam
 colorFrom: blue
 colorTo: indigo
 sdk: docker
@@ -8,7 +7,7 @@ app_file: server.py
 pinned: false
 ---
 
-# 🧠 YOLOv8 FastAPI Real-time Detection (Skripsi Project)
+# Sistem Anti Cheating Online Exam (Skripsi Project)
 
 Proyek ini adalah implementasi **FastAPI + YOLOv8 (Ultralytics)** untuk deteksi perilaku mencurigakan secara **real-time** melalui **WebSocket**.
 
@@ -21,7 +20,7 @@ Didesain untuk keperluan penelitian/skripsi, aplikasi ini mampu:
 
 ---
 
-## 🚀 Deploy di Hugging Face Spaces
+## Deploy di Hugging Face Spaces
 
 Aplikasi ini siap dijalankan di **Hugging Face Spaces (SDK: FastAPI)**.
 
@@ -40,18 +39,17 @@ Aplikasi ini siap dijalankan di **Hugging Face Spaces (SDK: FastAPI)**.
 ## 🧩 Struktur Folder
 
 skripsi-yolo/
+├── static
+   └── home.html
+   └── testPage.html
 ├── server.py
+├── best.pt
 ├── requirements.txt
 ├── README.md
-└── runs/
-└── detect/
-└── train/
-└── weights/
-└── best.pt
 
 ---
 
-## ⚙️ Menjalankan di Lokal
+## Menjalankan di Lokal
 
 ### 1. Buat virtual environment (opsional tapi disarankan)
 
