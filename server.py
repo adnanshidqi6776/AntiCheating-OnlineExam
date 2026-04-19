@@ -1,212 +1,346 @@
-import asyncio
-import json
-import base64
-import cv2
-import numpy as np
-import torch
+from flask import Flask, request, jsonify, send_from_directory
 import os
-import csv
+import torch
 import time
-from fastapi import FastAPI, WebSocket
-from fastapi.responses import HTMLResponse
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
-from ultralytics import YOLO
+import csv
+import cv2
+from docx import Document
 from datetime import datetime
+from ultralytics import YOLO
+import numpy as np
 
+app = Flask(__name__)
 
-app = FastAPI()
-app.mount("/static", StaticFiles(directory="./static"), name="static")
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# Load Model
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
-model = YOLO('./best.pt')
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+MODEL_PATH = os.path.join(
+    BASE_DIR,
+    "runs",
+    "detect",
+    "train",
+    "weights",
+    "best.pt"
+)
+
+model = YOLO(MODEL_PATH)
 model.to(device)
 
-# === Fungsi untuk mencatat log pelanggaran ===
-def log_violation(violation_type, confidence, filename):
-    os.makedirs("logs", exist_ok=True)  # Check folder logs
-    log_file = os.path.join("logs", "violations_log.csv")  # Simpan di folder logs
-    file_exists = os.path.isfile(log_file)
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+# GLOBAL STATE PER USER
 
-    # Pastikan file ada header kalau baru dibuat
-    with open(log_file, "a", newline="") as f:
-        writer = csv.writer(f)
-        if not file_exists:
-            writer.writerow(["waktu", "jenis_pelanggaran", "confidence", "file_gambar"])
-        writer.writerow([timestamp, violation_type, f"{confidence:.2f}", filename])
+user_sessions = {}
 
+COOLDOWN = 5
+CONF_THRESHOLD = 0.57
 
+# ROUTE
 
-warning_count = 0
-max_warnings = None
-pending_warning = False
-detect_enabled = True
+@app.route("/")
+def home():
 
-last_save_time = 0
-SAVE_COOLDOWN = 5   # detik
+    return send_from_directory("static", "home.html")
 
-last_warning_time = 0
-WARNING_COOLDOWN = 5  # detik (memastikan notifikasi warning tidak bertumpuk)
+@app.route("/test")
+def test_page():
+    return send_from_directory("static", "testPage.html")
 
+# CREATE SESSION
 
-@app.get("/")
-async def get():
-    return HTMLResponse("YOLO WebSocket Server Running!")
+@app.route("/start_exam", methods=["POST"])
+def start_exam():
 
+    data = request.json
 
-@app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
-    global warning_count, max_warnings, pending_warning
-    global last_save_time, last_warning_time
-    global detect_enabled
-    await websocket.accept()
-    print("WS Connected")
+    nama = data["nama"]
+    nim = data["nim"]
+    limit = int(data["limit"])
 
-    warning_count = 0
-    max_warnings = None
-    pending_warning = False
+    user_sessions[nama] = {
 
-    try:
-        while True:
-            data = await websocket.receive_text()
-            payload = json.loads(data)
+        "nim": nim,
+        "limit": limit,
+        "count": 0,
+        "cooldown": False,
+        "recording": False,
+        "last_violation_time": 0
 
-            # --- Menerima konfigurasi awal ---
-            if "max_warnings" in payload:
-                max_warnings = int(payload["max_warnings"])
-                warning_count = 0
-                detect_enabled = payload.get("detect_enabled", True)
-                print(f"Max warnings = {max_warnings}, Deteksi aktif = {detect_enabled}")
+    }
+
+    os.makedirs(
+        f"detected_image/{nama}",
+        exist_ok=True
+    )
+
+    os.makedirs(
+        f"answer/{nama}",
+        exist_ok=True
+    )
+
+    print("Session created:", nama)
+
+    return jsonify({
+        "status": "ok"
+    })
+
+@app.route("/detect", methods=["POST"])
+def detect():
+
+    file = request.files["image"]
+    nama = request.form["nama"]
+
+    # read image
+    file_bytes = np.frombuffer(
+        file.read(),
+        np.uint8
+    )
+
+    frame = cv2.imdecode(
+        file_bytes,
+        cv2.IMREAD_COLOR
+    )
+
+    results = model(frame)
+
+    boxes_data = []
+
+    detected = False
+    label = None
+    confidence = 0
+
+    for r in results:
+
+        for box in r.boxes:
+
+            cls = int(box.cls[0])
+
+            conf = float(box.conf[0])
+
+            name = model.names[cls]
+
+            # FILTER CONFIDENCE
+            if conf < CONF_THRESHOLD:
                 continue
 
+            x1, y1, x2, y2 = map(
+                int,
+                box.xyxy[0]
+            )
 
-            # --- Menerima frame ---
-            if "image" in payload:
-                img_data = base64.b64decode(payload["image"].split(",")[1])
-                npimg = np.frombuffer(img_data, np.uint8)
-                frame = cv2.imdecode(npimg, cv2.IMREAD_COLOR)
-                # frame = cv2.flip(frame, 1)  mirror camera
+            boxes_data.append({
 
+                "label": name,
+                "confidence": round(conf, 2),
+                "bbox": [
+                    x1,
+                    y1,
+                    x2,
+                    y2
+                ]
 
-                # Jalankan YOLO di thread terpisah agar tidak blocking event loop
-                results = await asyncio.to_thread(
-                    model.predict,
-                    frame,
-                    conf=0.5,
-                    imgsz=480,
-                    device=device,
-                    verbose=False
+            })
+
+            # DETECTED FLAG
+            if name in [
+                "handphone",
+                "book",
+                "finger"
+            ]:
+
+                detected = True
+                label = name
+                confidence = conf
+
+    return jsonify({
+
+        "boxes": boxes_data,
+        "detected": detected,
+        "label": label,
+        "confidence": confidence
+
+    })
+
+# DETECTION EVENT
+
+@app.route("/violation_event", methods=["POST"])
+def violation_event():
+
+    data = request.json
+
+    nama = data["nama"]
+    detected = data["detected"]
+    confidence = data["confidence"]
+    label = data["label"]
+
+    session = user_sessions[nama]
+
+    now = time.time()
+
+    if detected:
+
+        if session["cooldown"]:
+
+            return jsonify({
+                "action": "skip"
+            })
+
+        session["recording"] = True
+
+        return jsonify({
+            "action": "start_recording"
+        })
+
+    else:
+
+        if session["recording"]:
+
+            session["recording"] = False
+
+            if now - session["last_violation_time"] >= COOLDOWN:
+
+                session["count"] += 1
+
+                session["cooldown"] = True
+
+                session["last_violation_time"] = now
+
+                log_violation(
+                    nama,
+                    label,
+                    confidence
                 )
 
-                r = results[0]
+                if session["count"] >= session["limit"]:
 
-                boxes = []
-                warning_detected = False
+                    return jsonify({
+                        "action": "force_end"
+                    })
 
-                for box in r.boxes:
-                    cls = model.names[int(box.cls)]
-                    conf = float(box.conf)
-                    x1, y1, x2, y2 = box.xyxy[0].tolist()
+                return jsonify({
+                    "action": "stop_recording",
+                    "count": session["count"]
+                })
 
-                    if cls in ["finger", "book", "handphone"] and conf > 0.57:
-                        warning_detected = True
-                        print(f"Detected label={cls}, conf={conf:.2f}")
-                        boxes.append({
-                            "class": cls,
-                            "confidence": conf,
-                            "bbox": [x1, y1, x2, y2]
-                        })
-
-                
-                # --- Simpan frame jika ada deteksi ---
-                current_time = time.time()
-
-                if warning_detected and detect_enabled and (current_time - last_save_time > SAVE_COOLDOWN):
-                    last_save_time = current_time
-                    
-                    # === Simpan gambar & log HANYA jika toggle ON ===
-                    save_dir = "detected_images"
-                    os.makedirs(save_dir, exist_ok=True)    
-
-                    # Gambar bounding box di frame
-                    annotated_frame = frame.copy()
-                    for b in boxes:
-                        x1, y1, x2, y2 = map(int, b["bbox"])
-                        label = f"{b['class']} {b['confidence']:.2f}"
-                        cv2.rectangle(annotated_frame, (x1, y1), (x2, y2), (0, 255, 255), 2)
-                        cv2.putText(
-                            annotated_frame,
-                            label,
-                            (x1, max(y1 - 10, 20)),
-                            cv2.FONT_HERSHEY_SIMPLEX,
-                            0.6,
-                            (0, 0, 255),
-                            2,
-                        )
-
-                    # Simpan file dengan timestamp unik
-                    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-                    filename = f"{save_dir}/deteksi_{timestamp}.jpg"
-                    cv2.imwrite(filename, annotated_frame)
-                    print(f"Gambar disimpan: {filename}")
-
-                    # Simpan log pelanggaran
-                    if boxes:
-                        log_violation(boxes[0]['class'], boxes[0]['confidence'], filename)
+        return jsonify({
+            "action": "none"
+        })
 
 
+# RESET COOLDOWN
 
-                # Kirim hasil bounding box ke client
-                await websocket.send_text(json.dumps({
-                    "boxes": boxes
-                }))
+@app.route("/reset_cooldown", methods=["POST"])
+def reset_cooldown():
 
-                # Jika ada deteksi mencurigakan
-                current_time = time.time()
+    data = request.json
 
-                if warning_detected and detect_enabled and (current_time - last_warning_time > WARNING_COOLDOWN):
-                    last_warning_time = current_time
-                    pending_warning = True
-                    print(" Sending show_warning to frontend (toggle ON)")
-                    await websocket.send_text(json.dumps({
-                        "show_warning": True,
-                        "message": "Terdeteksi melakukan kecurangan!"
-                    }))
-                    asyncio.create_task(asyncio.sleep(3))
+    nama = data["nama"]
 
+    session = user_sessions[nama]
 
-            # --- Menerima konfirmasi dari frontend ---
-            if payload.get("cmd") == "ack_warning":
-                if pending_warning:
-                    warning_count += 1
-                    pending_warning = False
-                    print(f"ACK diterima — warning_count = {warning_count}")
+    session["cooldown"] = False
 
-                    if max_warnings and warning_count >= max_warnings:
-                        print("Stop signal dikirim ke frontend!")
-                        await websocket.send_text(json.dumps({
-                            "stop": True,
-                            "message": f"Kecurangan melebihi batas ({warning_count}/{max_warnings})! Kamera dihentikan."
-                        }))
-                        await websocket.close()
-                        break
+    return jsonify({
+        "status": "cooldown_reset"
+    })
 
-    except Exception as e:
-        print("WS Closed:", e)
-    finally:
-        print("WS Closed")
+# SAVE VIDEO EVENT
 
-# === server lokal ===
+@app.route("/save_video", methods=["POST"])
+def save_video():
+
+    file = request.files["video"]
+    nama = request.form["nama"]
+
+    session = user_sessions[nama]
+
+    count = session["count"]
+
+    filename = f"violation_{count}.webm"
+
+    path = f"detected_image/{nama}/{filename}"
+
+    file.save(path)
+
+    print("Video saved:", path)
+
+    return jsonify({
+        "status": "saved"
+    })
+
+# LOG CSV
+
+def log_violation(nama, label, confidence):
+
+    path = f"logs/{nama}_violation.csv"
+
+    os.makedirs("logs", exist_ok=True)
+
+    file_exists = os.path.isfile(path)
+
+    with open(
+        path,
+        "a",
+        newline=""
+    ) as file:
+
+        writer = csv.writer(file)
+
+        if not file_exists:
+
+            writer.writerow([
+                "waktu",
+                "jenis",
+                "confidence"
+            ])
+
+        writer.writerow([
+            datetime.now(),
+            label,
+            confidence
+        ])
+
+# SAVE ANSWERS
+
+@app.route("/save_answers", methods=["POST"])
+def save_answers():
+
+    from docx import Document
+
+    data = request.json
+
+    nama = data["nama"]
+    answers = data["answers"]
+
+    doc = Document()
+
+    for i, ans in enumerate(answers):
+
+        doc.add_paragraph(
+            f"Soal {i+1}"
+        )
+
+        doc.add_paragraph(ans)
+
+        doc.add_paragraph("")
+
+    path = f"answer/{nama}/jawaban.docx"
+
+    doc.save(path)
+
+    print("Answers saved")
+
+    return jsonify({
+        "status": "saved"
+    })
+
+# RUN
+
 if __name__ == "__main__":
-    import uvicorn
-    port = int(os.environ.get("PORT", 8000))
-    uvicorn.run("server:app", host="0.0.0.0", port=port)
+
+    app.run(
+        host="0.0.0.0",
+        port=5000,
+        debug=True
+    )

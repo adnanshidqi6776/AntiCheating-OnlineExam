@@ -1,162 +1,165 @@
 <!doctype html>
-<html lang="en">
+<html lang="id">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Home</title>
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-      integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"
-      crossorigin="anonymous" />
+    <meta charset="UTF-8" />
+
+    <title>Home - Sistem Ujian</title>
 
     <style>
-      /* Mirror video */
-      #camera {
+      body {
+        font-family: Arial;
+        text-align: center;
+        background: #f5f5f5;
+      }
+
+      .container {
+        margin-top: 30px;
+      }
+
+      video {
+        width: 400px;
+        border-radius: 10px;
         transform: scaleX(-1);
-        -webkit-transform: scaleX(-1);
+      }
+
+      input {
+        padding: 10px;
+        margin: 10px;
+        width: 250px;
+      }
+
+      button {
+        padding: 12px 30px;
+        font-size: 16px;
+        cursor: pointer;
+      }
+
+      .error {
+        color: red;
       }
     </style>
   </head>
+
   <body>
-    <!-- Navigation Bar-->
-    <nav class="navbar navbar-expand-lg" style="background-color: #f2f2f2">
-      <div
-        class="container-fluid d-flex justify-content-between align-items-center">
-        <!-- Logo -->
-        <img
-          src="https://openeducat.org/web/image/website/1/social_default_image?unique=0917bc6"
-          alt="logo"
-          height="50rem"
-          width="80rem" />
+    <div class="container">
+      <h2>SISTEM UJIAN ONLINE</h2>
 
-        <!-- Tombol Toggle -->
-        <button
-          class="navbar-toggler"
-          type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#navbarSupportedContent"
-          aria-controls="navbarSupportedContent"
-          aria-expanded="false"
-          aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
-        </button>
+      <video id="video" autoplay></video>
 
-        <!-- Menu -->
-        <div
-          class="collapse navbar-collapse justify-content-center"
-          id="navbarSupportedContent">
-          <ul class="navbar-nav mb-2 mb-lg-0">
-            <li class="nav-item">
-              <a class="nav-link active" aria-current="page" href="#">Home</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="#">About</a>
-            </li>
-            <li class="nav-item dropdown">
-              <a
-                class="nav-link dropdown-toggle"
-                href="#"
-                role="button"
-                data-bs-toggle="dropdown"
-                aria-expanded="false">
-                Help
-              </a>
-              <ul class="dropdown-menu">
-                <li><a class="dropdown-item" href="#">Proctor</a></li>
-                <li><a class="dropdown-item" href="#">Teacher</a></li>
-                <li><hr class="dropdown-divider" /></li>
-                <li>
-                  <a class="dropdown-item" href="#">Admin</a>
-                </li>
-              </ul>
-            </li>
-          </ul>
-        </div>
-      </div>
-    </nav>
+      <br />
 
-    <div class="container mt-4">
-      <!--Kamera langsung aktif-->
-      <div class="row justify-content-center">
-        <div class="col-6 text-center">
-          <video id="camera" width="75%" autoplay playsinline></video>
-        </div>
-      </div>
+      <input id="nama" type="text" placeholder="Nama (huruf)" />
 
-      <!--input batas deteksi kecurangan-->
-      <div class="row justify-content-center mt-4">
-        <div class="col-6">
-          <div class="input-group mb-3">
-            <input
-              type="number"
-              min="1"
-              id="limitInput"
-              class="form-control"
-              placeholder="Input cheating detection limits!" />
-            <button
-              onclick="goToTestPage()"
-              class="btn btn-outline-secondary"
-              type="button"
-              id="button-start">
-              Start
-            </button>
-          </div>
-          <br />
-          <!-- Toggle Bar -->
-          <div class="form-check form-switch">
-            <input
-              class="form-check-input"
-              type="checkbox"
-              id="toggleDetection"
-              checked />
-            <label class="form-check-label" for="toggleDetection">
-              Aktifkan Deteksi Kecurangan
-            </label>
-          </div>
-        </div>
-      </div>
+      <br />
+
+      <input id="nim" type="text" placeholder="NIM (angka)" />
+
+      <br />
+
+      <input id="limit" type="number" placeholder="Max Kecurangan (>1)" />
+
+      <br />
+
+      <button onclick="startExam()">START UJIAN</button>
+
+      <p id="error" class="error"></p>
     </div>
-
-    <!-- Kamera langsung aktif -->
-    <script>
-      const video = document.getElementById("camera");
-
-      // Kamera langsung aktif
-      async function startCamera() {
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia({
-            video: true,
-          });
-          video.srcObject = stream;
-        } catch (error) {
-          alert("Gagal mengakses kamera: " + error.message);
-        }
-      }
-
-      // Jalankan kamera otomatis saat halaman selesai dimuat
-      window.addEventListener("load", startCamera);
-
-      function goToTestPage() {
-        const limit = document.getElementById("limitInput").value;
-        const detectionEnabled =
-          document.getElementById("toggleDetection").checked;
-
-        if (!limit || limit < 1) {
-          alert("Masukkan angka minimal 1 terlebih dahulu!");
-          return;
-        }
-
-        window.location.href = `testPage.html?limit=${limit}&detect=${
-          detectionEnabled ? "on" : "off"
-        }`;
-      }
-    </script>
-
-    <!-- Bootstrap JS -->
-    <script
-      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
-      integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
-      crossorigin="anonymous"></script>
   </body>
+
+  <script>
+    let video = document.getElementById("video");
+
+    let stream;
+
+    // START WEBCAM
+
+    async function startCamera() {
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+      });
+
+      video.srcObject = stream;
+    }
+
+    startCamera();
+
+    // VALIDATION
+
+    function validateInput(nama, nim, limit) {
+      const nameRegex = /^[A-Za-z ]+$/;
+
+      const nimRegex = /^[0-9]+$/;
+
+      if (!nameRegex.test(nama)) {
+        return "Nama harus huruf";
+      }
+
+      if (!nimRegex.test(nim)) {
+        return "NIM harus angka";
+      }
+
+      if (limit < 1) {
+        return "Max kecurangan minimal 1";
+      }
+
+      return null;
+    }
+
+    // START EXAM
+
+    async function startExam() {
+      let nama = document.getElementById("nama").value;
+
+      let nim = document.getElementById("nim").value;
+
+      let limit = document.getElementById("limit").value;
+
+      let error = validateInput(nama, nim, limit);
+
+      if (error) {
+        document.getElementById("error").innerText = error;
+
+        return;
+      }
+
+      document.getElementById("error").innerText = "";
+
+      // CALL SERVER
+
+      let response = await fetch("/start_exam", {
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json",
+        },
+
+        body: JSON.stringify({
+          nama: nama,
+
+          nim: nim,
+
+          limit: limit,
+        }),
+      });
+
+      let result = await response.json();
+
+      if (result.status === "ok") {
+        // stop webcam
+
+        stream.getTracks().forEach((track) => track.stop());
+
+        // redirect
+
+        window.location.href =
+          "/test" +
+          "?nama=" +
+          encodeURIComponent(nama) +
+          "&nim=" +
+          encodeURIComponent(nim) +
+          "&limit=" +
+          encodeURIComponent(limit);
+      }
+    }
+  </script>
 </html>

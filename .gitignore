@@ -20,7 +20,7 @@ test/
 detected_images/
 
 # Tetap upload folder runs
-!runs/
+!runs/**/weights/best.pt
 runs/**
 
 # Configs & logs
