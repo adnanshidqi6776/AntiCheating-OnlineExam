@@ -9,52 +9,64 @@ pinned: false
 
 # Sistem Anti Cheating Online Exam (Skripsi Project)
 
-Proyek ini adalah implementasi **FastAPI + YOLOv8 (Ultralytics)** untuk deteksi perilaku mencurigakan secara **real-time** melalui **WebSocket**.
+This project is an implementation of **YOLOv8n (Ultralytics) + Flask Framework**
+to detect cheating behavior during online exams in real-time using webcam monitoring.
 
-Didesain untuk keperluan penelitian/skripsi, aplikasi ini mampu:
-
-- Mendeteksi objek seperti _finger_, _book_, _handphone_ menggunakan model YOLOv8 custom.
-- Mengirim hasil deteksi bounding box ke frontend melalui WebSocket.
-- Menyimpan frame hasil deteksi secara otomatis.
-- Menampilkan notifikasi peringatan bila deteksi melebihi batas tertentu.
+This system was developed as an undergraduate thesis project.
 
 ---
 
-## Deploy di Hugging Face Spaces
+# Main Features
 
-Aplikasi ini siap dijalankan di **Hugging Face Spaces (SDK: FastAPI)**.
-
-### **Langkah-langkah:**
-
-1. Buat Space baru di [Hugging Face Spaces](https://huggingface.co/spaces)
-2. Pilih:
-   - **SDK** → `FastAPI`
-   - **Hardware** → `GPU` (agar YOLO dapat menggunakan CUDA)
-   - **Repository Source** → `From GitHub`
-3. Hubungkan dengan repo GitHub kamu yang berisi file ini (`server.py`, `requirements.txt`, dan model YOLO).
-4. Deploy — Spaces akan otomatis menginstal dependensi dan menjalankan server.
+- Input student identity (Name & NIM)
+- Set maximum cheating tolerance
+- Real-time object detection using YOLOv8 custom model
+- Detect cheating objects:
+  - Handphone
+  - Book
+  - Finger
+- Display warning notification when cheating is detected
+- Record cheating evidence automatically
+- Save cheating evidence as video (`.webm`)
+- Save student answers into Microsoft Word (`.docx`)
+- Cheating counter & progress bar
 
 ---
 
-## 🧩 Struktur Folder
+# Technology Stack
 
+- Python
+- Flask
+- YOLOv8n (Ultralytics)
+- OpenCV
+- Bootstrap 5
+- HTML/CSS/JavaScript
+- PyTorch
+
+---
+
+# Folder Structure
+
+```text
 skripsi-yolo/
-├── static
-   └── home.html
-   └── testPage.html
+│
+├── static/
+│   ├── home.html
+│   └── testPage.html
+│
+├── detected_image/
+│
+├── answer/
+│
+├── logs/
+│
+├── runs/
+│   └── detect/
+│       └── train/
+│           └── weights/
+│               └── best.pt
+│
 ├── server.py
-├── best.pt
 ├── requirements.txt
 ├── README.md
-
----
-
-## Menjalankan di Lokal
-
-### 1. Buat virtual environment (opsional tapi disarankan)
-
-```bash
-python -m venv venv
-source venv/bin/activate  # Linux/Mac
-venv\Scripts\activate     # Windows
 ```
