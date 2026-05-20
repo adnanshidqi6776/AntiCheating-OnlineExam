@@ -42,25 +42,33 @@
 
   <body>
     <div class="container">
-      <h2>SISTEM UJIAN ONLINE</h2>
+      <h2>SISTEM UJIAN DARING</h2>
 
       <video id="video" autoplay></video>
+      <!-- Preview Webcam -->
 
       <br />
 
       <input id="nama" type="text" placeholder="Nama (huruf)" />
+      <!-- Input Nama -->
 
       <br />
 
       <input id="nim" type="text" placeholder="NIM (angka)" />
+      <!-- Input NIM -->
 
       <br />
 
-      <input id="limit" type="number" placeholder="Max Kecurangan (>1)" />
+      <!-- Input Max Cheating-->
+      <input
+        id="limit"
+        type="number"
+        placeholder="Batas Toleransi Menyontek (< 1)" />
 
       <br />
 
-      <button onclick="startExam()">START UJIAN</button>
+      <button onclick="startExam()">MULAI UJIAN</button>
+      <!-- Tombol start-->
 
       <p id="error" class="error"></p>
     </div>
@@ -91,15 +99,15 @@
       const nimRegex = /^[0-9]+$/;
 
       if (!nameRegex.test(nama)) {
-        return "Nama harus huruf";
+        return "Nama berisi huruf";
       }
 
       if (!nimRegex.test(nim)) {
-        return "NIM harus angka";
+        return "NIM berisi angka";
       }
 
       if (limit < 1) {
-        return "Max kecurangan minimal 1";
+        return "Batas Toleransi minimal 1";
       }
 
       return null;
@@ -145,11 +153,14 @@
       let result = await response.json();
 
       if (result.status === "ok") {
+        nama = result.nama; //taking name from input
+        nim = result.nim; //taking NIM from input
+
         // stop webcam
 
         stream.getTracks().forEach((track) => track.stop());
 
-        // redirect
+        // direct to testPage.html and save point name, NIM, and limit
 
         window.location.href =
           "/test" +

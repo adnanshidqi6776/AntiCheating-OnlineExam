@@ -2,7 +2,13 @@
 <html lang="id">
   <head>
     <meta charset="UTF-8" />
-    <title>Test Page</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Online Test Simulator</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"
+      crossorigin="anonymous" />
 
     <style>
       body {
@@ -25,28 +31,12 @@
 
       .question-btn {
         width: 100%;
-        padding: 10px;
-        margin-bottom: 5px;
-        cursor: pointer;
-      }
-
-      /* CENTER */
-
-      .center {
-        flex: 1;
-        padding: 20px;
+        height: 50px;
+        font-weight: bold;
       }
 
       textarea {
-        width: 100%;
-        height: 200px;
-      }
-
-      /* RIGHT */
-
-      .right {
-        width: 450px;
-        padding: 10px;
+        resize: none;
       }
 
       canvas {
@@ -56,49 +46,92 @@
       /* WARNING */
 
       #warning {
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: red;
-        color: white;
-        padding: 15px;
-        border-radius: 10px;
-        display: none;
-        font-weight: bold;
         z-index: 9999;
       }
     </style>
   </head>
 
-  <body>
-    <div id="warning">⚠️ Kecurangan terdeteksi!</div>
+  <body class="bg-light">
+    <!-- Warning Notification -->
+    <div
+      id="warning"
+      class="alert alert-danger position-fixed top-0 start-50 translate-middle-x mt-3 d-none">
+      Kecurangan terdeteksi!
+    </div>
 
-    <div class="container">
-      <!-- LEFT -->
+    <div class="container-fluid vh-100">
+      <div class="row h-100">
+        <!-- LEFT PANEL -->
+        <div class="col-md-2 bg-white border-end p-2">
+          <h5 class="text-center mb-3">Pilihan Soal</h5>
 
-      <div class="left" id="questionButtons"></div>
+          <div
+            id="questionButtons"
+            class="d-grid gap-2"
+            style="grid-template-columns: repeat(4, 1fr)"></div>
+        </div>
 
-      <!-- CENTER -->
+        <!-- CENTER PANEL -->
+        <div class="col-md-7 p-3">
+          <div class="card shadow-sm h-100">
+            <div class="card-body d-flex flex-column">
+              <h5 id="questionText" class="mb-4 fw-bold"></h5>
 
-      <div class="center">
-        <h3 id="questionText"></h3>
+              <textarea
+                id="answerBox"
+                class="form-control flex-grow-1"
+                placeholder="Tulis jawaban di sini...">
+              </textarea>
+              <div class="d-flex justify-content-between mt-4">
+                <!-- LEFT SIDE -->
+                <div>
+                  <button
+                    class="btn btn-primary me-2"
+                    onclick="previousQuestion()">
+                    Previous
+                  </button>
 
-        <textarea id="answerBox"></textarea>
+                  <button class="btn btn-primary" onclick="nextQuestion()">
+                    Next
+                  </button>
+                </div>
 
-        <br /><br />
+                <!-- RIGHT SIDE -->
+                <button class="btn btn-danger" onclick="endExam()">END</button>
+              </div>
+            </div>
+          </div>
+        </div>
 
-        <button onclick="endExam()">END</button>
-      </div>
+        <!-- RIGHT PANEL -->
+        <div class="col-md-3 bg-white border-start p-3">
+          <div class="card-body text-center">
+            <!-- Webcam -->
+            <canvas
+              id="canvas"
+              class="w-100 rounded border"
+              style="max-height: 300px">
+            </canvas>
 
-      <!-- RIGHT -->
+            <div class="mt-3">
+              <h6 class="fw-bold">Tingkat Pelanggaran</h6>
 
-      <div class="right">
-        <canvas id="canvas"></canvas>
+              <!-- Cheating Bar -->
+              <div class="progress">
+                <div
+                  id="progressBar"
+                  class="progress-bar bg-danger"
+                  style="width: 0%"></div>
+              </div>
 
-        <p>
-          Pelanggaran:
-          <span id="count">0</span>
-        </p>
+              <!-- Cheating Counter -->
+              <p class="mt-2">
+                Pelanggaran:
+                <span id="count" class="fw-bold text-danger"> 0 </span>
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -111,33 +144,34 @@
 
       let count = 0;
 
+      // List of Question
       let questions = [
-        "Jelaskan pengertian Artificial Intelligence",
+        "1.	Jelaskan perbedaan antara penelitian eksperimental dan penelitian rekayasa (engineering research).",
 
-        "Apa itu Machine Learning",
+        "2.	Dalam sebuah proyek Capstone, bagaimana Anda mengidentifikasi masalah teknis yang layak dijadikan topik penelitian atau pengembangan alat?Jelaskan langkah-langkah analisis masalah tersebut.",
 
-        "Jelaskan fungsi dataset",
+        "3.	Tuliskan contoh rumusan masalah dan tujuan penelitian untuk proyek pengembangan sistem otomatisasi berbasis mikrokontroler.",
 
-        "Apa itu overfitting",
+        "4.	Dalam tahap perancangan sistem, mengapa penting melakukan kajian pustaka (literature review) terhadap teknologi atau metode yang sudah ada?Jelaskan bagaimana hasil kajian pustaka membantu Anda menentukan solusi desain",
 
-        "Perbedaan classification dan regression",
+        "5.	Jelaskan metode pengujian (testing) yang relevan untuk menilai performa alat atau sistem yang Anda rancang.Sertakan parameter apa saja yang sebaiknya diukur.",
 
-        "Apa itu Computer Vision",
+        "6.	Apa perbedaan antara data primer dan data sekunder dalam penelitian teknik? Jelaskan contoh bagaimana keduanya digunakan dalam proyek Capstone.",
 
-        "Jelaskan deep learning",
+        "7.	Jelaskan perbedaan antara penelitian kualitatif dan kuantitatif, baik dari segi tujuan, data yang digunakan, maupun pendekatan analisisnya.",
 
-        "Apa fungsi convolution layer",
+        "8.	Dalam penulisan ilmiah, apa perbedaan antara kutipan langsung dan tidak langsung? Jelaskan pula bagaimana cara menuliskannya sesuai kaidah sitasi akademik.",
 
-        "Apa itu object detection",
+        "9.	Dalam menyusun rumusan masalah penelitian, apa saja kriteria yang harus diperhatikan agar rumusan tersebut baik dan jelas?",
 
-        "Peran YOLO dalam object detection",
+        "10.	Dalam dokumen Capstone, bagaimana struktur penulisan yang baik untuk Bab III (Metodologi/Perancangan)?Jelaskan komponen penting yang harus dijelaskan di bab tersebut.",
       ];
 
       let answers = new Array(10).fill("");
 
       let currentQuestion = 0;
 
-      /* CREATE QUESTION BUTTONS */
+      // CREATE QUESTION BUTTONS
 
       function createButtons() {
         let container = document.getElementById("questionButtons");
@@ -147,7 +181,7 @@
 
           btn.innerText = i + 1;
 
-          btn.className = "question-btn";
+          btn.className = "btn btn-outline-success question-btn";
 
           btn.onclick = () => showQuestion(i);
 
@@ -157,7 +191,24 @@
 
       createButtons();
 
+      //  Button Update
+
+      function updateButtonStatus() {
+        let buttons = document.querySelectorAll(".question-btn");
+
+        buttons.forEach((btn, i) => {
+          if (answers[i].trim() !== "") {
+            btn.classList.remove("btn-outline-success");
+            btn.classList.add("btn-Success");
+          } else {
+            btn.classList.remove("btn-success");
+            btn.classList.add("btn-outline-success");
+          }
+        });
+      }
+
       function showQuestion(index) {
+        // simpan jawaban sebelumnya
         answers[currentQuestion] = document.getElementById("answerBox").value;
 
         currentQuestion = index;
@@ -165,11 +216,48 @@
         document.getElementById("questionText").innerText = questions[index];
 
         document.getElementById("answerBox").value = answers[index];
+
+        updateButtonStatus();
+
+        updateNavigationButtons();
       }
 
       showQuestion(0);
+      updateButtonStatus();
+      updateNavigationButtons();
 
-      /* CAMERA */
+      // Tombol Previous
+
+      function previousQuestion() {
+        if (currentQuestion > 0) {
+          showQuestion(currentQuestion - 1);
+        }
+      }
+
+      // Tombol Next
+
+      function nextQuestion() {
+        if (currentQuestion < questions.length - 1) {
+          showQuestion(currentQuestion + 1);
+        }
+      }
+
+      // Disabled Button on First and Last Question
+      function updateNavigationButtons() {
+        let prevBtn = document.querySelector(
+          'button[onclick="previousQuestion()"]',
+        );
+
+        let nextBtn = document.querySelector(
+          'button[onclick="nextQuestion()"]',
+        );
+
+        prevBtn.disabled = currentQuestion === 0;
+
+        nextBtn.disabled = currentQuestion === questions.length - 1;
+      }
+
+      // CAMERA
 
       let canvas = document.getElementById("canvas");
 
@@ -204,14 +292,14 @@
 
       startCamera();
 
-      /* DRAW LOOP */
+      // DRAW BOXES
 
       let boxes = [];
 
       function drawLoop() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // mirror video saja
+        // MIRROR VIDEO
         ctx.save();
 
         ctx.translate(canvas.width, 0);
@@ -221,17 +309,29 @@
 
         ctx.restore();
 
+        // DRAW NORMAL
         drawBoxes();
 
         requestAnimationFrame(drawLoop);
       }
 
-      /* DETECTION LOOP */
+      // DETECTION LOOP
 
-      setInterval(sendFrame, 1000);
+      setInterval(sendFrame, 200); // fps = 5, 100 = 10, 66 = 15, 33 = 60
 
       function sendFrame() {
-        canvas.toBlob(async (blob) => {
+        // OFFSCREEN CANVAS
+        let tempCanvas = document.createElement("canvas");
+
+        let tempCtx = tempCanvas.getContext("2d");
+
+        tempCanvas.width = video.videoWidth;
+        tempCanvas.height = video.videoHeight;
+
+        // DRAW ORIGINAL VIDEO (NO MIRROR)
+        tempCtx.drawImage(video, 0, 0, tempCanvas.width, tempCanvas.height);
+
+        tempCanvas.toBlob(async (blob) => {
           let formData = new FormData();
 
           formData.append("image", blob);
@@ -245,51 +345,48 @@
 
           let data = await res.json();
 
-          console.log("Detection result:", data);
-
           boxes = data.boxes;
 
           handleViolation(data);
         });
       }
 
-      /* DRAW BOXES */
+      // DRAW BOXES
 
       function drawBoxes() {
-        if (!video.videoWidth) return;
-
         ctx.font = "16px Arial";
         ctx.strokeStyle = "red";
         ctx.lineWidth = 2;
         ctx.fillStyle = "red";
 
         boxes.forEach((b) => {
-          if (b.confidence < 0.57) return;
-
           let [x1, y1, x2, y2] = b.bbox;
 
           let width = x2 - x1;
           let height = y2 - y1;
 
-          ctx.strokeRect(x1, y1, width, height);
+          // MIRROR BBOX
+          let mirroredX = canvas.width - x2;
 
-          ctx.fillText(b.label + " " + b.confidence, x1, y1 - 5);
+          ctx.strokeRect(mirroredX, y1, width, height);
+
+          ctx.fillText(b.label + " " + b.confidence, mirroredX, y1 - 5);
         });
       }
 
-      /* WARNING */
+      // WARNING
 
       let warning = document.getElementById("warning");
 
       function showWarning() {
-        warning.style.display = "block";
+        warning.classList.remove("d-none");
       }
 
       function hideWarning() {
-        warning.style.display = "none";
+        warning.classList.add("d-none");
       }
 
-      /* RECORDING */
+      // RECORDING
 
       let mediaRecorder;
 
@@ -300,10 +397,10 @@
       function startRecording() {
         if (isRecording) return;
 
-        let stream = canvas.captureStream(15);
+        let stream = canvas.captureStream(15); // 15 fps
 
         mediaRecorder = new MediaRecorder(stream, {
-          mimeType: "video/mp4",
+          mimeType: "video/webm",
           videoBitsPerSecond: 1500000,
         });
 
@@ -325,7 +422,7 @@
 
         mediaRecorder.onstop = async () => {
           let blob = new Blob(recordedChunks, {
-            type: "video/mp4",
+            type: "video/webm",
           });
 
           let formData = new FormData();
@@ -343,17 +440,18 @@
         isRecording = false;
       }
 
-      /* VIOLATION HANDLER */
+      // VIOLATION HANDLER
 
       let lastDetect = false;
+      let lastDetectTime = 0;
+      let stopDelay = 2000; // 2 detik
 
       async function handleViolation(data) {
         if (data.detected) {
           showWarning();
-
           startRecording();
 
-          lastDetect = true;
+          lastDetectTime = Date.now();
 
           await fetch("/violation_event", {
             method: "POST",
@@ -370,38 +468,36 @@
         } else {
           hideWarning();
 
-          if (lastDetect) {
-            stopRecording();
+          // jangan langsung stop
+          if (Date.now() - lastDetectTime > stopDelay) {
+            if (isRecording) {
+              stopRecording();
 
-            lastDetect = false;
+              let res = await fetch("/violation_event", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  nama: nama,
+                  detected: false,
+                  confidence: data.confidence,
+                  label: data.label,
+                }),
+              });
 
-            let res = await fetch("/violation_event", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                nama: nama,
-                detected: false,
-                confidence: data.confidence,
-                label: data.label,
-              }),
-            });
+              let result = await res.json();
 
-            let result = await res.json();
+              if (result.action === "force_end") {
+                alert("Ujian dihentikan karena pelanggaran mencapai maksimum");
+                endExam();
+              }
 
-            if (result.action === "force_end") {
-              alert("Ujian dihentikan karena pelanggaran mencapai maksimum");
-
-              endExam();
-            }
-
-            if (result.count !== undefined) {
-              count = result.count;
-
-              document.getElementById("count").innerText = count;
-
-              setTimeout(resetCooldown, 5000);
+              if (result.count !== undefined) {
+                count = result.count;
+                updateProgress();
+                setTimeout(resetCooldown, 5000);
+              }
             }
           }
         }
@@ -419,7 +515,19 @@
         });
       }
 
-      /* END EXAM */
+      // Update Progress Bar
+
+      function updateProgress() {
+        document.getElementById("count").innerText = count;
+
+        let percent = (count / limit) * 100;
+
+        document.getElementById("progressBar").style.width = percent + "%";
+      }
+
+      updateProgress();
+
+      // END EXAM
 
       async function endExam() {
         answers[currentQuestion] = document.getElementById("answerBox").value;
@@ -441,5 +549,11 @@
         window.location.href = "/";
       }
     </script>
+
+    <!-- Bootstrap JS-->
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
+      crossorigin="anonymous"></script>
   </body>
 </html>
